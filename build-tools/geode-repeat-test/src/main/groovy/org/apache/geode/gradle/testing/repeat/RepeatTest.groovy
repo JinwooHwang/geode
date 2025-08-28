@@ -32,6 +32,9 @@ public class RepeatTest extends Test {
   @Input
   private int times = 5
 
+  // Backing property for dry-run; lazily initialized to reflect Gradle start parameter (-m / --dry-run).
+  private Property<Boolean> dryRun
+
   /**
    * Submit each test class for processing multiple times.
    */
@@ -74,6 +77,10 @@ public class RepeatTest extends Test {
 
   @Override
   Property<Boolean> getDryRun() {
-    return super.getDryRun()
+    if (dryRun == null) {
+      boolean cliDryRun = getServices().get(StartParameter.class).isDryRun()
+      dryRun = project.objects.property(Boolean).convention(cliDryRun)
+    }
+    return dryRun
   }
 }

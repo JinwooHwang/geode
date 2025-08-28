@@ -44,11 +44,10 @@ public class LauncherProxyWorkerProcessFactory extends DefaultWorkerProcessFacto
       IdGenerator<Long> idGenerator, File gradleUserHomeDir,
       TemporaryFileProvider temporaryFileProvider,
       JavaExecHandleFactory execHandleFactory,
-      JvmVersionDetector jvmVersionDetector,
       OutputEventListener outputEventListener,
       MemoryManager memoryManager, ProcessLauncher processLauncher) {
     super(loggingManager, server, classPathRegistry, idGenerator, gradleUserHomeDir,
-        temporaryFileProvider, execHandleFactory, jvmVersionDetector, outputEventListener,
+        temporaryFileProvider, execHandleFactory, outputEventListener,
         memoryManager);
     this.processLauncher = processLauncher;
   }
