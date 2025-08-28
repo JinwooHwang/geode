@@ -135,7 +135,8 @@ sourceSets {
 }
 tasks.register('geodeOldVersionClasspathsJar', Jar) {
   from sourceSets.oldVersions.output
-  classifier 'oldVersions'
+  // Gradle 8: use archiveClassifier property instead of deprecated classifier(String) method
+  archiveClassifier.set('oldVersions')
 }
 
 artifacts {

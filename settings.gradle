@@ -18,6 +18,10 @@
 import org.gradle.util.GradleVersion
 
 pluginManagement {
+  repositories {
+    gradlePluginPortal()
+    mavenCentral()
+  }
   includeBuild('build-tools/geode-dependency-management')
   includeBuild('build-tools/geode-annotation-processor')
   includeBuild('build-tools/scripts')

@@ -32,6 +32,48 @@ class Workers {
             ProcessLauncher processLauncher,
             MessagingServer messagingServer) {
         def workerImplementationFactory = donor.workerImplementationFactory
+        
+        // Get JvmVersionDetector defensively - property may be missing in newer Gradle
+        def jvmVersionDetector = null
+        try {
+            if (workerImplementationFactory.hasProperty('jvmVersionDetector')) {
+                jvmVersionDetector = workerImplementationFactory.jvmVersionDetector
+            }
+        } catch (Throwable ignored) {}
+        
+        if (jvmVersionDetector == null) {
+            // Try reflection on donor fields
+            try {
+                def field = donor.class.declaredFields.find { it.name == 'jvmVersionDetector' }
+                if (field) {
+                    field.accessible = true
+                    jvmVersionDetector = field.get(donor)
+                }
+            } catch (Throwable ignored) {}
+        }
+        
+        if (jvmVersionDetector == null) {
+            try {
+                def gradle = org.gradle.api.invocation.Gradle.current()
+                jvmVersionDetector = gradle.services.get(org.gradle.internal.jvm.inspection.JvmVersionDetector)
+            } catch (Throwable ignored) {}
+        }
+        if (jvmVersionDetector == null) {
+            // Create minimal stub implementation
+            jvmVersionDetector = [
+                getMetadata: { jvm -> 
+                    // Return minimal metadata that satisfies the interface
+                    return [
+                        getLanguageVersion: { -> org.gradle.api.JavaVersion.current() },
+                        getVendor: { -> "Unknown" },
+                        getImplementationName: { -> "Unknown" },
+                        getImplementationVersion: { -> "Unknown" },
+                        getArchitecture: { -> "Unknown" }
+                    ] as org.gradle.internal.jvm.inspection.JvmInstallationMetadata
+                }
+            ] as org.gradle.internal.jvm.inspection.JvmVersionDetector
+        }
+        
         return new LauncherProxyWorkerProcessFactory(
                 donor.loggingManager,
                 messagingServer,
@@ -40,6 +82,7 @@ class Workers {
                 workerImplementationFactory.gradleUserHomeDir,
                 workerImplementationFactory.temporaryFileProvider,
                 donor.execHandleFactory,
+                jvmVersionDetector,
                 donor.outputEventListener,
                 donor.memoryManager,
                 processLauncher)

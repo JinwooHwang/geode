@@ -19,7 +19,8 @@ plugins {
   id 'standard-subproject-configuration'
   id 'warnings'
   id 'distribution'
-  id 'com.palantir.docker'
+  // Palantir Docker plugin not supported for Gradle 8
+  // id 'com.palantir.docker' version "0.36.0"
   id 'geode-publish-common'
 }
 
@@ -138,7 +139,6 @@ dependencies {
 
   geodeLibdirJars(project(':geode-server-all'))
 
-
   // The complete runtime deps as defined in the server bom
   geodeLibdirJarsDeprecated(platform(project(':boms:geode-all-bom')))
   // Deprecated admin API
@@ -203,7 +203,6 @@ dependencies {
   integrationTestImplementation('javax.annotation:javax.annotation-api')
   integrationTestImplementation('javax.servlet:javax.servlet-api')
 
-
   integrationTestRuntimeOnly('io.swagger.core.v3:swagger-annotations')
   // these two modules are for testing only
   integrationTestRuntimeOnly('com.fasterxml.jackson.datatype:jackson-datatype-joda')
@@ -236,7 +235,6 @@ dependencies {
     exclude group: 'org.apache.tomcat'
   }
   distributedTestImplementation('org.codehaus.cargo:cargo-core-uberjar')
-
   distributedTestRuntimeOnly('io.swagger.core.v3:swagger-annotations')
   distributedTestRuntimeOnly(project(':geode-wan'))
 
@@ -541,13 +539,14 @@ distributions {
 build.dependsOn(installDist)
 
 tasks.named('srcDistTar').configure {
-  classifier 'src'
+  archiveClassifier.set('src')
 }
 
 [
   tasks.named('distZip'),
   tasks.named('srcDistZip'),
-  tasks.named('dockerfileZip'),
+  // Palantir Docker plugin not supported in Gradle 8
+  // tasks.named('dockerfileZip'),
 ]*.configure {
   enabled = false
 }
@@ -593,15 +592,15 @@ task dumpInstalledJars(dependsOn: installDist) {
     }
   }
 }
-
-docker {
-  dependsOn(tasks.installDist)
-  name geodeDockerImageName
-  copySpec.from(tasks.installDist.outputs).into('geode')
-}
+// Removed deprecated Palantir Docker plugin usage. 
+// docker {
+//   dependsOn(tasks.installDist)
+//   name geodeDockerImageName
+//   copySpec.from(tasks.installDist.outputs).into('geode')
+// }
 
 acceptanceTest {
-  if (!Os.isFamily(Os.FAMILY_WINDOWS)) {
-    dependsOn(tasks.docker)
-  }
+//   if (!Os.isFamily(Os.FAMILY_WINDOWS)) {
+//     dependsOn(tasks.docker)
+//   }
 }
