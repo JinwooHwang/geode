@@ -29,6 +29,7 @@ import java.util.Set;
 
 import org.gradle.api.Action;
 import org.gradle.api.logging.LogLevel;
+import org.gradle.internal.nativeintegration.services.NativeServices.NativeServicesMode;
 import org.gradle.process.internal.JavaExecHandleBuilder;
 import org.gradle.process.internal.worker.WorkerProcess;
 import org.gradle.process.internal.worker.WorkerProcessBuilder;
@@ -126,6 +127,21 @@ public class LauncherProxyWorkerProcessBuilder implements WorkerProcessBuilder {
   @Override
   public void enableJvmMemoryInfoPublishing(boolean shouldPublish) {
     delegate.enableJvmMemoryInfoPublishing(shouldPublish);
+  }
+
+  @Override
+  public WorkerProcessBuilder setAddJpmsCompatibilityFlags(boolean addJpmsCompatibilityFlags) {
+    return delegate.setAddJpmsCompatibilityFlags(addJpmsCompatibilityFlags);
+  }
+
+  @Override
+  public NativeServicesMode getNativeServicesMode() {
+    return delegate.getNativeServicesMode();
+  }
+
+  @Override
+  public void setNativeServicesMode(NativeServicesMode nativeServicesMode) {
+    delegate.setNativeServicesMode(nativeServicesMode);
   }
 
   /**

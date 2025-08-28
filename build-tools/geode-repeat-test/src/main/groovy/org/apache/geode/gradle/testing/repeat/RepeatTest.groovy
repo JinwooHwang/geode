@@ -20,10 +20,12 @@ import org.gradle.api.internal.DocumentationRegistry
 import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec
 import org.gradle.api.internal.tasks.testing.TestExecuter
 import org.gradle.api.internal.tasks.testing.filter.DefaultTestFilter
+import org.gradle.api.provider.Property
 import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.Input
 import org.gradle.internal.time.Clock
 import org.gradle.internal.work.WorkerLeaseRegistry
+import org.gradle.internal.work.WorkerLeaseService
 
 public class RepeatTest extends Test {
 
@@ -54,6 +56,7 @@ public class RepeatTest extends Test {
             getActorFactory(),
             getModuleRegistry(),
             getServices().get(WorkerLeaseRegistry.class),
+            getServices().get(WorkerLeaseService.class),
             getServices().get(StartParameter.class).getMaxWorkerCount(),
             getServices().get(Clock.class),
             getServices().get(DocumentationRegistry.class),
@@ -67,5 +70,10 @@ public class RepeatTest extends Test {
 
   void setTimes(int times) {
     this.times = times
+  }
+
+  @Override
+  Property<Boolean> getDryRun() {
+    return super.getDryRun()
   }
 }

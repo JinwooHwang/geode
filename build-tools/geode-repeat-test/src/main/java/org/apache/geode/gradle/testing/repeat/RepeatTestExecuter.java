@@ -28,6 +28,7 @@ import org.gradle.api.internal.tasks.testing.TestExecuter;
 import org.gradle.api.internal.tasks.testing.TestFramework;
 import org.gradle.api.internal.tasks.testing.TestResultProcessor;
 import org.gradle.api.internal.tasks.testing.WorkerTestClassProcessorFactory;
+import org.gradle.api.internal.tasks.testing.detection.ForkedTestClasspathFactory;
 import org.gradle.api.internal.tasks.testing.detection.DefaultTestClassScanner;
 import org.gradle.api.internal.tasks.testing.detection.DefaultTestExecuter;
 import org.gradle.api.internal.tasks.testing.detection.TestFrameworkDetector;
@@ -38,13 +39,17 @@ import org.gradle.api.internal.tasks.testing.processors.RestartEveryNTestClassPr
 import org.gradle.api.internal.tasks.testing.processors.RunPreviousFailedFirstTestClassProcessor;
 import org.gradle.api.internal.tasks.testing.processors.TestMainAction;
 import org.gradle.api.internal.tasks.testing.worker.ForkingTestClassProcessor;
+import org.gradle.api.internal.tasks.testing.worker.ForkedTestClasspath;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.internal.Factory;
 import org.gradle.internal.actor.ActorFactory;
 import org.gradle.internal.time.Clock;
 import org.gradle.internal.work.WorkerLeaseRegistry;
+import org.gradle.internal.work.WorkerLeaseService;
+import org.gradle.internal.work.WorkerThreadRegistry;
 import org.gradle.process.internal.worker.WorkerProcessFactory;
+import java.util.ArrayList;
 
 /**
  * A copy of {@link DefaultTestExecuter} from Gradle v6.8.3, modified to process each test class
@@ -72,6 +77,8 @@ public class RepeatTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
   private final ActorFactory actorFactory;
   private final ModuleRegistry moduleRegistry;
   private final WorkerLeaseRegistry workerLeaseRegistry;
+  private final WorkerLeaseService workerLeaseService;
+  private final WorkerThreadRegistry workerThreadRegistry;
   private final int maxWorkerCount;
   private final Clock clock;
   private final DocumentationRegistry documentationRegistry;
@@ -80,13 +87,16 @@ public class RepeatTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
   private TestClassProcessor processor;
 
   public RepeatTestExecuter(WorkerProcessFactory workerFactory, ActorFactory actorFactory,
-      ModuleRegistry moduleRegistry, WorkerLeaseRegistry workerLeaseRegistry, int maxWorkerCount,
+      ModuleRegistry moduleRegistry, WorkerLeaseRegistry workerLeaseRegistry, WorkerLeaseService workerLeaseService, 
+      WorkerThreadRegistry workerThreadRegistry, int maxWorkerCount,
       Clock clock, DocumentationRegistry documentationRegistry, DefaultTestFilter testFilter,
       int iterationCount) {
     this.workerFactory = workerFactory;
     this.actorFactory = actorFactory;
     this.moduleRegistry = moduleRegistry;
     this.workerLeaseRegistry = workerLeaseRegistry;
+    this.workerLeaseService = workerLeaseService;
+    this.workerThreadRegistry = workerThreadRegistry;
     this.maxWorkerCount = maxWorkerCount;
     this.clock = clock;
     this.documentationRegistry = documentationRegistry;
@@ -98,21 +108,23 @@ public class RepeatTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
   public void execute(final JvmTestExecutionSpec testExecutionSpec,
       TestResultProcessor testResultProcessor) {
     final TestFramework testFramework = testExecutionSpec.getTestFramework();
+    final ForkedTestClasspathFactory testClasspathFactory = new ForkedTestClasspathFactory(moduleRegistry);
+    final ForkedTestClasspath classpath = testClasspathFactory.create(
+            testExecutionSpec.getClasspath(),
+            testExecutionSpec.getModulePath(),
+            testFramework, 
+            testExecutionSpec.getTestIsModule()
+        );
     final WorkerTestClassProcessorFactory testInstanceFactory = testFramework.getProcessorFactory();
     final WorkerLeaseRegistry.WorkerLease
         currentWorkerLease =
         workerLeaseRegistry.getCurrentWorkerLease();
-    final Set<File> classpath = ImmutableSet.copyOf(testExecutionSpec.getClasspath());
-    final Set<File> modulePath = ImmutableSet.copyOf(testExecutionSpec.getModulePath());
-    final List<String>
-        testWorkerImplementationModules =
-        testFramework.getTestWorkerImplementationModules();
+    // Removed: getTestWorkerImplementationModules() - deprecated in Gradle 8+
     final Factory<TestClassProcessor> forkingProcessorFactory = () -> {
       TestClassProcessor forkingTestClassProcessor =
-          new ForkingTestClassProcessor(currentWorkerLease, workerFactory, testInstanceFactory,
-              testExecutionSpec.getJavaForkOptions(), classpath, modulePath,
-              testWorkerImplementationModules, testFramework.getWorkerConfigurationAction(),
-              moduleRegistry, documentationRegistry);
+          new ForkingTestClassProcessor(workerThreadRegistry, workerFactory, testInstanceFactory,
+              testExecutionSpec.getJavaForkOptions(), classpath,
+              testFramework.getWorkerConfigurationAction(), documentationRegistry);
       // Wrap the forking processor to make it distinguish different executions of a test class
       return new ExecutionTrackingTestClassProcessor(forkingTestClassProcessor, iterationCount);
     };
@@ -132,15 +144,17 @@ public class RepeatTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
     Runnable detector;
     if (testExecutionSpec.isScanForTestClasses() && testFramework.getDetector() != null) {
       TestFrameworkDetector testFrameworkDetector = testFramework.getDetector();
-      testFrameworkDetector.setTestClasses(testExecutionSpec.getTestClassesDirs().getFiles());
-      testFrameworkDetector.setTestClasspath(classpath);
+      testFrameworkDetector.setTestClasses(new ArrayList<>(testExecutionSpec.getTestClassesDirs().getFiles()));
+      List<File> classpathList = new ArrayList<>();
+      testExecutionSpec.getClasspath().forEach(classpathList::add);
+      testFrameworkDetector.setTestClasspath(classpathList);
       detector = new DefaultTestClassScanner(testClassFiles, testFrameworkDetector, processor);
     } else {
       detector = new DefaultTestClassScanner(testClassFiles, null, processor);
     }
 
-    new TestMainAction(detector, processor, testResultProcessor, clock, testExecutionSpec.getPath(),
-        "Gradle Test Run " + testExecutionSpec.getIdentityPath()).run();
+    new TestMainAction(detector, processor, testResultProcessor, workerLeaseService, clock, testExecutionSpec,
+        testExecutionSpec.getPath()).run();
   }
 
   @Override
