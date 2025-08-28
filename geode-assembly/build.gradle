@@ -592,7 +592,7 @@ task dumpInstalledJars(dependsOn: installDist) {
     }
   }
 }
-// Removed deprecated Palantir Docker plugin usage. 
+// Removed deprecated Palantir Docker plugin usage.
 // docker {
 //   dependsOn(tasks.installDist)
 //   name geodeDockerImageName
@@ -600,7 +600,7 @@ task dumpInstalledJars(dependsOn: installDist) {
 // }
 
 acceptanceTest {
-//   if (!Os.isFamily(Os.FAMILY_WINDOWS)) {
-//     dependsOn(tasks.docker)
-//   }
+  //   if (!Os.isFamily(Os.FAMILY_WINDOWS)) {
+  //     dependsOn(tasks.docker)
+  //   }
 }

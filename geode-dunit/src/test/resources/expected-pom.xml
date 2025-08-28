@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <!--
   Licensed to the Apache Software Foundation (ASF) under one or more
   contributor license agreements.  See the NOTICE file distributed with
@@ -52,8 +52,8 @@
       <scope>compile</scope>
       <exclusions>
         <exclusion>
-          <artifactId>geode-core</artifactId>
           <groupId>*</groupId>
+          <artifactId>geode-core</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -98,8 +98,8 @@
       <scope>runtime</scope>
       <exclusions>
         <exclusion>
-          <artifactId>geode-core</artifactId>
           <groupId>*</groupId>
+          <artifactId>geode-core</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -134,32 +134,32 @@
       <scope>runtime</scope>
       <exclusions>
         <exclusion>
+          <groupId>*</groupId>
           <artifactId>cglib</artifactId>
-          <groupId>*</groupId>
         </exclusion>
         <exclusion>
+          <groupId>*</groupId>
           <artifactId>spring-core</artifactId>
-          <groupId>*</groupId>
         </exclusion>
         <exclusion>
+          <groupId>*</groupId>
           <artifactId>asm</artifactId>
-          <groupId>*</groupId>
         </exclusion>
         <exclusion>
+          <groupId>*</groupId>
           <artifactId>spring-aop</artifactId>
-          <groupId>*</groupId>
         </exclusion>
         <exclusion>
+          <groupId>*</groupId>
           <artifactId>guava</artifactId>
-          <groupId>*</groupId>
         </exclusion>
         <exclusion>
+          <groupId>*</groupId>
           <artifactId>aopalliance</artifactId>
-          <groupId>*</groupId>
         </exclusion>
         <exclusion>
-          <artifactId>spring-context-support</artifactId>
           <groupId>*</groupId>
+          <artifactId>spring-context-support</artifactId>
         </exclusion>
       </exclusions>
       <optional>true</optional>
@@ -175,8 +175,8 @@
       <scope>runtime</scope>
       <exclusions>
         <exclusion>
-          <artifactId>junit-dep</artifactId>
           <groupId>*</groupId>
+          <artifactId>junit-dep</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -206,8 +206,8 @@
       <scope>runtime</scope>
       <exclusions>
         <exclusion>
-          <artifactId>hamcrest</artifactId>
           <groupId>*</groupId>
+          <artifactId>hamcrest</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
