@@ -206,9 +206,15 @@ if (project.hasProperty('askpass')) {
   }
 }
 
-gradle.taskGraph.whenReady({ graph ->
-  def allTestTasks = rootProject.subprojects.collect { it.tasks.withType(Test) }.flatten()
-  def cr = tasks.getByName('combineReports') as TestReport
-  cr.reportOn allTestTasks
-  cr.dependsOn allTestTasks
-})
+// Gradle 8: Avoid taskGraph.whenReady implicit dependency wiring (violates configuration cache/validation)
+// Wire all Test tasks into combineReports lazily at configuration time so their outputs are declared inputs.
+def combineReportsProvider = tasks.named('combineReports', TestReport)
+subprojects { sp ->
+  // Use withType(Test) to lazily capture any test-like tasks once created
+  sp.tasks.withType(Test).configureEach { testTask ->
+    combineReportsProvider.configure { cr ->
+      cr.reportOn(testTask)
+      cr.dependsOn(testTask)
+    }
+  }
+}

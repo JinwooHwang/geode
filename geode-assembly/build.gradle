@@ -408,7 +408,10 @@ tasks.register('docs', Javadoc) {
     rootProject.subprojects.each { project ->
       copy {
         if (project.hasProperty('sourceSets')) {
-          from project.sourceSets.main.resources.srcDirs
+          def mainSourceSet = project.sourceSets.findByName('main')
+          if (mainSourceSet?.resources?.srcDirs) {
+            from mainSourceSet.resources.srcDirs
+          }
         }
         include 'javadoc-images/*'
         into docsDir
