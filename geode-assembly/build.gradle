@@ -394,14 +394,32 @@ tasks.register('docs', Javadoc) {
   options.encoding = 'UTF-8'
   title = "${productName} ${project.version}"
   destinationDir = docsDir
+  // Defer aggregation of sources/classpaths to execution to avoid cross-project
+  // configuration resolution during the configuration phase (Gradle 8 safety).
+  // Capture the contributing projects now (cheap) but DO NOT touch their Javadoc
+  // tasks until execution.
+  def contributingProjects = providers.provider { getDependencyProjectsFor('javadocOnly') }
 
-  getDependencyProjectsFor('javadocOnly').forEach() { Project proj ->
-    proj.tasks.withType(Javadoc).findAll { it.enabled }.each { javadocTask ->
-      source += javadocTask.source
-      classpath += javadocTask.classpath
-      excludes += javadocTask.excludes
-      includes += javadocTask.includes
+  doFirst {
+    // Rebuild sources & classpath fresh to avoid duplicates if task configured multiple times.
+    source = files()
+    classpath = files()
+
+    contributingProjects.get().each { Project proj ->
+      proj.tasks.withType(Javadoc).matching { it.enabled }.each { child ->
+        // Add sources & classpath lazily. Using additive operations avoids repeated recreation.
+        source(child.source)
+        classpath += child.classpath
+        if (!child.excludes.empty) {
+          excludes.addAll(child.excludes)
+        }
+        if (!child.includes.empty) {
+          includes.addAll(child.includes)
+        }
+      }
     }
+    // Optional: de-duplicate classpath entries (Javadoc tolerates dups but keeps things tidy)
+    classpath = files(classpath.files as Set)
   }
 
   include 'org/apache/geode/**/'
