@@ -28,8 +28,6 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 
-import javax.annotation.Nullable;
-
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -44,7 +42,6 @@ public class PdxFieldTest {
   static final FieldType FIELD_TYPE = FieldType.OBJECT;
   static final boolean IDENTITY_FIELD = true;
 
-  @Nullable
   static FieldType getAnotherFieldType(FieldType anythingButThis) {
     for (FieldType fieldType : FieldType.values()) {
       if (!anythingButThis.equals(fieldType)) {

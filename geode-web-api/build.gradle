@@ -38,7 +38,7 @@ dependencies {
   compileOnly(project(':geode-membership'))
   compileOnly(project(':geode-serialization'))
 
-  compileOnly('javax.servlet:javax.servlet-api')
+  compileOnly('jakarta.servlet:jakarta.servlet-api')
 
   implementation('org.apache.commons:commons-lang3')
   implementation('commons-fileupload:commons-fileupload') {
@@ -46,7 +46,7 @@ dependencies {
   }
 
   // JAXB dependencies needed for Java 11+
-  implementation('javax.xml.bind:jaxb-api')
+  implementation('jakarta.xml.bind:jakarta.xml.bind-api')
   implementation('com.sun.xml.bind:jaxb-impl')
 
   // jackson-annotations must be accessed from the geode classloader and not the webapp
@@ -91,7 +91,7 @@ dependencies {
     exclude module: 'geode-core'
   }
   testImplementation(project(':geode-core'))
-  testImplementation('javax.servlet:javax.servlet-api')
+  testImplementation('jakarta.servlet:jakarta.servlet-api')
 
   integrationTestImplementation('org.springframework:spring-test')
   integrationTestImplementation('org.springframework.security:spring-security-test')

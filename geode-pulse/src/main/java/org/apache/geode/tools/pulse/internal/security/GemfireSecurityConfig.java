@@ -16,10 +16,12 @@
 package org.apache.geode.tools.pulse.internal.security;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 
@@ -37,8 +39,14 @@ public class GemfireSecurityConfig extends DefaultSecurityConfig {
     authenticationProvider = gemFireAuthenticationProvider;
   }
 
-  @Override
-  protected void configure(AuthenticationManagerBuilder authenticationManagerBuilder) {
-    authenticationManagerBuilder.authenticationProvider(authenticationProvider);
+  /**
+   * Spring Security 6.x requires explicit AuthenticationManager configuration using
+   * ProviderManager.
+   * This replaces the deprecated AuthenticationManagerBuilder pattern and provides direct control
+   * over the authentication provider chain for GemFire-based authentication.
+   */
+  @Bean
+  public AuthenticationManager authenticationManager() {
+    return new ProviderManager(authenticationProvider);
   }
 }

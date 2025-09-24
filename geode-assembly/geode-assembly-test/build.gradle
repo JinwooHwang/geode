@@ -30,7 +30,7 @@ dependencies {
   compileOnly(project(':geode-junit'))
   implementation(project(':geode-logging'))
   implementation(project(':geode-membership'))
-  implementation('javax.servlet:javax.servlet-api')
+  implementation('jakarta.servlet:jakarta.servlet-api')
   implementation('org.apache.commons:commons-lang3')
   compileOnly(project(':geode-tcp-server'))
   compileOnly('com.fasterxml.jackson.core:jackson-databind')

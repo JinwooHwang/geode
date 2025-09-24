@@ -14,8 +14,7 @@
  */
 package org.apache.geode.rest.internal.web.security;
 
-import javax.servlet.ServletContext;
-
+import jakarta.servlet.ServletContext;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.ServletContextAware;
 

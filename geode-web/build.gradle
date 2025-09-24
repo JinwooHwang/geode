@@ -42,7 +42,7 @@ dependencies {
   }
 
   providedCompile(platform(project(':boms:geode-all-bom')))
-  providedCompile('javax.servlet:javax.servlet-api')
+  providedCompile('jakarta.servlet:jakarta.servlet-api')
   providedCompile('org.apache.logging.log4j:log4j-api')
 
   implementation('org.springframework:spring-webmvc')

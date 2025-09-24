@@ -41,7 +41,7 @@ dependencies {
   implementation('io.swagger.core.v3:swagger-annotations')
 
   // JAXB dependencies needed for Java 11+
-  implementation('javax.xml.bind:jaxb-api')
+  implementation('jakarta.xml.bind:jakarta.xml.bind-api')
   implementation('com.sun.xml.bind:jaxb-impl')
 
   //    //Find bugs is used in multiple places in the code to suppress findbugs warnings

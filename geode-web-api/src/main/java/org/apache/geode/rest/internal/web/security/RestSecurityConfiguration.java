@@ -19,12 +19,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.SecurityFilterChain;
 
 import org.apache.geode.management.configuration.Links;
 
@@ -32,34 +32,46 @@ import org.apache.geode.management.configuration.Links;
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 @ComponentScan("org.apache.geode.rest.internal.web")
-public class RestSecurityConfiguration extends WebSecurityConfigurerAdapter {
+public class RestSecurityConfiguration {
 
   @Autowired
   private GeodeAuthenticationProvider authProvider;
 
-  @Override
-  protected void configure(AuthenticationManagerBuilder auth) {
-    auth.authenticationProvider(authProvider);
-  }
-
+  /**
+   * Spring Security 6.x requires explicit AuthenticationManager configuration using
+   * ProviderManager.
+   * This replaces the deprecated AuthenticationManagerBuilder pattern and provides direct control
+   * over the authentication provider chain for REST API authentication.
+   */
   @Bean
-  @Override
-  public AuthenticationManager authenticationManagerBean() throws Exception {
-    return super.authenticationManagerBean();
+  public AuthenticationManager authenticationManager() {
+    return new ProviderManager(authProvider);
   }
 
-  @Override
-  protected void configure(HttpSecurity http) throws Exception {
-
-    http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-        .authorizeRequests()
-        .antMatchers("/docs/**", "/swagger-ui.html", "/swagger-ui/index.html", "/swagger-ui/**",
-            Links.URI_VERSION + "/api-docs/**", "/webjars/springdoc-openapi-ui/**",
-            "/v3/api-docs/**", "/swagger-resources/**")
-        .permitAll().and().csrf().disable();
+  /**
+   * Migrated from WebSecurityConfigurerAdapter to SecurityFilterChain pattern for Spring Security
+   * 6.x.
+   * The SecurityFilterChain bean replaces the deprecated configure(HttpSecurity) method pattern
+   * and provides REST API security configuration with modern lambda-based syntax.
+   */
+  @Bean
+  public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    http.sessionManagement(
+        session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .authorizeHttpRequests(authorize -> authorize
+            .requestMatchers("/docs/**", "/swagger-ui.html", "/swagger-ui/index.html",
+                "/swagger-ui/**",
+                Links.URI_VERSION + "/api-docs/**", "/webjars/springdoc-openapi-ui/**",
+                "/v3/api-docs/**", "/swagger-resources/**")
+            .permitAll())
+        .csrf(csrf -> csrf.disable());
 
     if (authProvider.getSecurityService().isIntegratedSecurity()) {
-      http.authorizeRequests().anyRequest().authenticated().and().httpBasic();
+      http.authorizeHttpRequests(authorize -> authorize.anyRequest().authenticated())
+          .httpBasic(httpBasic -> {
+          });
     }
+
+    return http.build();
   }
 }

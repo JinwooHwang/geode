@@ -147,7 +147,7 @@ dependencies {
     transitive false
   }
   // Deprecated admin API
-  geodeLibdirJarsDeprecated(group: 'javax.mail', name: 'javax.mail-api')
+  geodeLibdirJarsDeprecated(group: 'jakarta.mail', name: 'jakarta.mail-api')
   // exclude mx4j, once the deprecated code is deleted we can remove these entirely
   geodeLibdirJarsDeprecated('mx4j:mx4j')
   geodeLibdirJarsDeprecated('mx4j:mx4j-remote')
@@ -200,8 +200,8 @@ dependencies {
   integrationTestImplementation('org.springframework.security:spring-security-oauth2-core')
   integrationTestImplementation('org.springframework.security:spring-security-oauth2-client')
   integrationTestImplementation('org.springframework.security:spring-security-oauth2-jose')
-  integrationTestImplementation('javax.annotation:javax.annotation-api')
-  integrationTestImplementation('javax.servlet:javax.servlet-api')
+  integrationTestImplementation('jakarta.annotation:jakarta.annotation-api')
+  integrationTestImplementation('jakarta.servlet:jakarta.servlet-api')
 
 
   integrationTestRuntimeOnly('io.swagger.core.v3:swagger-annotations')
@@ -230,7 +230,7 @@ dependencies {
   distributedTestImplementation(project(':geode-management'))
   distributedTestImplementation(project(':geode-web-management'))
   distributedTestImplementation('com.arakelian:java-jq')
-  distributedTestImplementation('javax.servlet:javax.servlet-api')
+  distributedTestImplementation('jakarta.servlet:jakarta.servlet-api')
 
   distributedTestRuntimeOnly(project(':extensions:geode-modules-session-internal')) {
     exclude group: 'org.apache.tomcat'
@@ -241,8 +241,8 @@ dependencies {
   distributedTestRuntimeOnly(project(':geode-wan'))
 
   // JAXB dependencies for Java 11+ compatibility (removed from JDK)
-  distributedTestCompileOnly('javax.xml.bind:jaxb-api')
-  distributedTestImplementation('javax.xml.bind:jaxb-api')
+  distributedTestCompileOnly('jakarta.xml.bind:jakarta.xml.bind-api')
+  distributedTestImplementation('jakarta.xml.bind:jakarta.xml.bind-api')
   distributedTestImplementation('com.sun.xml.bind:jaxb-impl')
 
   acceptanceTestImplementation(project(':geode-server-all'))

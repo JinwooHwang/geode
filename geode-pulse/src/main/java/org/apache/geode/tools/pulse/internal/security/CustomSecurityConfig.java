@@ -16,11 +16,11 @@
 package org.apache.geode.tools.pulse.internal.security;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.ImportResource;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 
@@ -45,8 +45,13 @@ public class CustomSecurityConfig extends DefaultSecurityConfig {
     this.authenticationManager = authenticationManager;
   }
 
-  @Override
-  protected void configure(AuthenticationManagerBuilder authenticationManagerBuilder) {
-    authenticationManagerBuilder.parentAuthenticationManager(authenticationManager);
+  /**
+   * Spring Security 6.x requires explicit AuthenticationManager bean configuration.
+   * This method exposes the AuthenticationManager imported from the custom XML configuration
+   * as a Spring bean, replacing the deprecated AuthenticationManagerBuilder pattern.
+   */
+  @Bean
+  public AuthenticationManager customAuthenticationManager() {
+    return authenticationManager;
   }
 }

@@ -25,6 +25,7 @@ import java.beans.PropertyChangeEvent;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.ServerSocket;
 import java.nio.file.Paths;
 
 import javax.servlet.http.HttpSession;
@@ -38,7 +39,6 @@ import org.apache.commons.io.FileUtils;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.util.SocketUtils;
 import org.xml.sax.SAXException;
 
 import org.apache.geode.cache.Region;
@@ -52,12 +52,28 @@ public abstract class AbstractSessionsTest {
   private static Region<String, HttpSession> region;
   protected static DeltaSessionManager sessionManager;
 
+  /**
+   * Spring Framework modernization: Replaces deprecated
+   * org.springframework.util.SocketUtils.findAvailableTcpPort()
+   * with direct Java implementation. SocketUtils was deprecated in Spring 5.3 and removed in Spring
+   * 6.x
+   * due to reliability issues. This implementation uses ServerSocket(0) which lets the OS assign
+   * an available ephemeral port, providing the same functionality with better reliability.
+   */
+  private static int findAvailablePort() {
+    try (ServerSocket socket = new ServerSocket(0)) {
+      return socket.getLocalPort();
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to find available port", e);
+    }
+  }
+
   // Set up the servers we need
   protected static void setupServer(final DeltaSessionManager manager) throws Exception {
     FileUtils.copyDirectory(
         Paths.get("..", "..", "resources", "integrationTest", "tomcat").toFile(),
         new File("./tomcat"));
-    port = SocketUtils.findAvailableTcpPort();
+    port = findAvailablePort();
     server = new EmbeddedTomcat(port, "JVM-1");
 
     final PeerToPeerCacheLifecycleListener p2pListener = new PeerToPeerCacheLifecycleListener();

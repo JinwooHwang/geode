@@ -107,11 +107,11 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 import javax.naming.Context;
-import javax.transaction.TransactionManager;
 
 import com.sun.jna.Native;
 import com.sun.jna.Platform;
 import io.micrometer.core.instrument.MeterRegistry;
+import jakarta.transaction.TransactionManager;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Logger;
 

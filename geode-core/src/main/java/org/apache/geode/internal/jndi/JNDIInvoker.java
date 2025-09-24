@@ -32,9 +32,9 @@ import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.NoInitialContextException;
 import javax.sql.DataSource;
-import javax.transaction.SystemException;
-import javax.transaction.TransactionManager;
 
+import jakarta.transaction.SystemException;
+import jakarta.transaction.TransactionManager;
 import org.apache.logging.log4j.Logger;
 
 import org.apache.geode.LogWriter;

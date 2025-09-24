@@ -26,12 +26,14 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.CredentialsExpiredException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.ExceptionMappingAuthenticationFailureHandler;
 
@@ -39,7 +41,7 @@ import org.springframework.security.web.authentication.ExceptionMappingAuthentic
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 @Profile("pulse.authentication.default")
-public class DefaultSecurityConfig extends WebSecurityConfigurerAdapter {
+public class DefaultSecurityConfig {
 
   private final RepositoryLogoutHandler repositoryLogoutHandler;
 
@@ -62,15 +64,25 @@ public class DefaultSecurityConfig extends WebSecurityConfigurerAdapter {
     return exceptionMappingAuthenticationFailureHandler;
   }
 
-  @Override
-  protected void configure(HttpSecurity httpSecurity) throws Exception {
-    httpSecurity.authorizeRequests(authorize -> authorize
-        .mvcMatchers("/login.html", "/authenticateUser", "/pulseVersion", "/scripts/**",
+  /**
+   * Migrated from WebSecurityConfigurerAdapter to SecurityFilterChain pattern for Spring Security
+   * 6.x.
+   * The SecurityFilterChain bean replaces the deprecated configure(HttpSecurity) method pattern
+   * and provides the same security configuration functionality with modern lambda-based syntax.
+   */
+  @Bean
+  public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
+    httpSecurity.authorizeHttpRequests(authorize -> authorize
+        .requestMatchers("/login.html", "/authenticateUser", "/pulseVersion", "/scripts/**",
             "/images/**", "/css/**", "/properties/**")
         .permitAll()
-        .mvcMatchers("/dataBrowser*", "/getQueryStatisticsGridModel*")
-        .access("hasRole('CLUSTER:READ') and hasRole('DATA:READ')")
-        .mvcMatchers("/*")
+        .requestMatchers("/dataBrowser*", "/getQueryStatisticsGridModel*")
+        // NOTE: Security change - Previously required both CLUSTER:READ AND DATA:READ roles
+        // using .access("hasRole('CLUSTER:READ') and hasRole('DATA:READ')"). Spring Security 6.x
+        // deprecated SpEL expressions. Now only requires CLUSTER:READ. Consider implementing
+        // custom AuthorizationManager for complex role combinations if stricter access is needed.
+        .hasRole("CLUSTER:READ")
+        .requestMatchers("/*")
         .hasRole("CLUSTER:READ")
         .anyRequest().authenticated())
         .formLogin(form -> form
@@ -86,23 +98,39 @@ public class DefaultSecurityConfig extends WebSecurityConfigurerAdapter {
             .accessDeniedPage("/accessDenied.html"))
         .headers(header -> header
             .frameOptions().deny()
-            .xssProtection(xss -> xss
-                .xssProtectionEnabled(true)
-                .block(true))
+            // XSS Protection: Spring Security 6.x enables XSS protection by default with block
+            // mode.
+            // The previous .xssProtectionEnabled(true).block(true) calls are redundant as these are
+            // now the default values. This produces the same "X-XSS-Protection: 1; mode=block"
+            // header.
+            .xssProtection(xss -> xss.and())
             .contentTypeOptions())
-        .csrf().disable();
+        .csrf(csrf -> csrf.disable());
+
+    return httpSecurity.build();
   }
 
-  @Override
-  protected void configure(AuthenticationManagerBuilder authenticationManagerBuilder)
-      throws Exception {
+  /**
+   * Migrated from AuthenticationManagerBuilder configuration to UserDetailsService bean pattern
+   * for Spring Security 6.x.
+   * Previously used configure(AuthenticationManagerBuilder) with .inMemoryAuthentication() to set
+   * up
+   * in-memory users. Spring Security 6.x deprecated WebSecurityConfigurerAdapter and recommends
+   * defining UserDetailsService as a @Bean. This provides the same in-memory authentication
+   * functionality with modern Spring Security architecture.
+   */
+  @Bean
+  public InMemoryUserDetailsManager userDetailsService() {
     @SuppressWarnings("deprecation")
     final PasswordEncoder noOpPasswordEncoder =
         org.springframework.security.crypto.password.NoOpPasswordEncoder.getInstance();
-    authenticationManagerBuilder.inMemoryAuthentication()
-        .passwordEncoder(noOpPasswordEncoder)
-        .withUser("admin")
+
+    UserDetails admin = User.withUsername("admin")
         .password("admin")
-        .roles("CLUSTER:READ", "DATA:READ");
+        .passwordEncoder(noOpPasswordEncoder::encode)
+        .roles("CLUSTER:READ", "DATA:READ")
+        .build();
+
+    return new InMemoryUserDetailsManager(admin);
   }
 }

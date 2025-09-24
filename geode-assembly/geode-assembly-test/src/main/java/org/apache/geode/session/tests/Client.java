@@ -18,8 +18,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.function.Function;
 
-import javax.servlet.http.HttpServletRequest;
-
+import jakarta.servlet.http.HttpServletRequest;
 import org.apache.http.Header;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;

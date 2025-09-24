@@ -17,14 +17,13 @@ package org.apache.geode.management.internal.rest.swagger;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRegistration;
-
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRegistration;
 import org.springdoc.core.GroupedOpenApi;
 import org.springdoc.webmvc.ui.SwaggerUiHome;
 import org.springframework.beans.factory.annotation.Autowired;

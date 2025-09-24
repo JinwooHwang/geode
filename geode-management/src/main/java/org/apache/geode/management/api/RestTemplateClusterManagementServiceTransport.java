@@ -21,19 +21,20 @@ import static org.apache.geode.management.rest.internal.Constants.INCLUDE_CLASS_
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
-import org.apache.http.Header;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.LaxRedirectStrategy;
-import org.apache.http.message.BasicHeader;
+import org.apache.hc.client5.http.auth.AuthScope;
+import org.apache.hc.client5.http.auth.UsernamePasswordCredentials;
+import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
+import org.apache.hc.client5.http.io.HttpClientConnectionManager;
+import org.apache.hc.client5.http.ssl.DefaultHostnameVerifier;
+import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.message.BasicHeader;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -128,32 +129,68 @@ public class RestTemplateClusterManagementServiceTransport
 
     restTemplate.setUriTemplateHandler(uriBuilderFactory);
 
-    // HttpComponentsClientHttpRequestFactory allows use to preconfigure httpClient for
-    // authentication and ssl context
+    // HttpComponentsClientHttpRequestFactory allows us to preconfigure httpClient for
+    // authentication and ssl context (migrated to HttpClient 5.x)
+    // Migration from HttpClient 4.x to 5.x involved updating package names (org.apache.http.* to
+    // org.apache.hc.*),
+    // changing SSL and connection management API, and updating authentication configuration
+    // patterns.
     HttpComponentsClientHttpRequestFactory requestFactory =
         new HttpComponentsClientHttpRequestFactory();
 
     HttpClientBuilder clientBuilder = HttpClientBuilder.create();
 
-    if (connectionConfig.getFollowRedirects()) {
-      clientBuilder.setRedirectStrategy(new LaxRedirectStrategy());
+    // Note: LaxRedirectStrategy class was removed in HttpClient 5.x migration
+    // Configure SSL context and connection manager
+    // HttpClient 5.x replaced org.apache.http.conn.ssl.SSLConnectionSocketFactory
+    // with org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory and updated the connection
+    // manager API. Previously, SSL context and hostname verifier were set directly on the client
+    // builder via setSSLContext() and setSSLHostnameVerifier(). Now they are configured together
+    // through the SSLConnectionSocketFactory and connection manager pattern.
+    if (connectionConfig.getSslContext() != null
+        || connectionConfig.getHostnameVerifier() != null) {
+      SSLConnectionSocketFactory sslSocketFactory = new SSLConnectionSocketFactory(
+          connectionConfig.getSslContext() != null ? connectionConfig.getSslContext()
+              : org.apache.hc.core5.ssl.SSLContexts.createDefault(),
+          connectionConfig.getHostnameVerifier() != null ? connectionConfig.getHostnameVerifier()
+              : new DefaultHostnameVerifier());
+
+      HttpClientConnectionManager connectionManager =
+          PoolingHttpClientConnectionManagerBuilder.create()
+              .setSSLSocketFactory(sslSocketFactory)
+              .build();
+      clientBuilder.setConnectionManager(connectionManager);
     }
-    // configures the clientBuilder
+
+    // Configure authentication
+    // HttpClient 5.x updated authentication API from org.apache.http.auth.* to
+    // org.apache.hc.client5.http.auth.*
+    // UsernamePasswordCredentials now uses char[] for password instead of String for better
+    // security
     if (connectionConfig.getAuthToken() != null) {
-      List<Header> defaultHeaders = Collections.singletonList(
-          new BasicHeader(HttpHeaders.AUTHORIZATION, "Bearer " + connectionConfig.getAuthToken()));
-      clientBuilder.setDefaultHeaders(defaultHeaders);
+      Header authHeader =
+          new BasicHeader(HttpHeaders.AUTHORIZATION, "Bearer " + connectionConfig.getAuthToken());
+      clientBuilder.setDefaultHeaders(List.of(authHeader));
     } else if (connectionConfig.getUsername() != null) {
-      CredentialsProvider credsProvider = new BasicCredentialsProvider();
+      BasicCredentialsProvider credsProvider = new BasicCredentialsProvider();
       credsProvider.setCredentials(
           new AuthScope(connectionConfig.getHost(), connectionConfig.getPort()),
           new UsernamePasswordCredentials(connectionConfig.getUsername(),
-              connectionConfig.getPassword()));
+              connectionConfig.getPassword().toCharArray()));
       clientBuilder.setDefaultCredentialsProvider(credsProvider);
     }
 
-    clientBuilder.setSSLContext(connectionConfig.getSslContext());
-    clientBuilder.setSSLHostnameVerifier(connectionConfig.getHostnameVerifier());
+    // Note: HttpClient 5.x handles redirects differently and follows them by default
+    // In HttpClient 4.x, redirects were disabled by default and required explicit configuration:
+    // if (connectionConfig.getFollowRedirects()) {
+    // clientBuilder.setRedirectStrategy(new LaxRedirectStrategy());
+    // }
+    // LaxRedirectStrategy was removed in HttpClient 5.x as redirects are now enabled by default.
+    // In HttpClient 5.x, redirects are enabled by default and LaxRedirectStrategy was removed.
+    // The followRedirects configuration is now managed through the HttpClientBuilder
+    if (!connectionConfig.getFollowRedirects()) {
+      clientBuilder.disableRedirectHandling();
+    }
 
     requestFactory.setHttpClient(clientBuilder.build());
     restTemplate.setRequestFactory(requestFactory);

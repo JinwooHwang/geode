@@ -25,5 +25,9 @@ dependencies {
   implementation(project(':extensions:geode-modules'))
 
   compileOnly(platform(project(':boms:geode-all-bom')))
+  // Jakarta EE Migration Strategy: This module maintains javax.servlet APIs to ensure
+  // backward compatibility with existing Tomcat deployments (versions 6-9).
+  // While newer test modules migrate to jakarta.servlet, this internal module preserves
+  // the javax namespace to avoid breaking existing integrations.
   compileOnly('javax.servlet:javax.servlet-api')
 }

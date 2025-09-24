@@ -38,7 +38,7 @@ dependencies {
   implementation('org.apache.logging.log4j:log4j-api')
 
   // JAXB dependencies needed for Java 11+
-  implementation('javax.xml.bind:jaxb-api')
+  implementation('jakarta.xml.bind:jakarta.xml.bind-api')
   implementation('com.sun.xml.bind:jaxb-impl')
 
   compileOnly(platform(project(':boms:geode-all-bom')))

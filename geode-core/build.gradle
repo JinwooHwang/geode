@@ -218,7 +218,7 @@ dependencies {
 
 
   //jaxb is used by cluster configuration
-  implementation('javax.xml.bind:jaxb-api')
+  implementation('jakarta.xml.bind:jakarta.xml.bind-api')
 
   //jaxb is used by cluster configuration
   implementation('com.sun.xml.bind:jaxb-impl')
@@ -251,12 +251,15 @@ dependencies {
   implementation('it.unimi.dsi:fastutil')
 
   //Mail API is used by the deprecated admin API
-  compileOnly('javax.mail:javax.mail-api') {
+  compileOnly('jakarta.mail:jakarta.mail-api') {
     ext.optional = true
   }
 
   //The resource-API is used by the JCA support.
-  api('javax.resource:javax.resource-api')
+  api('jakarta.resource:jakarta.resource-api')
+
+  //JTA transaction API used by transaction management
+  api('jakarta.transaction:jakarta.transaction-api')
 
 
   //MX4J is used by the old admin API
@@ -370,7 +373,7 @@ dependencies {
   // The block below is only for the deprecated admin mbeans API
   integrationTestRuntimeOnly('commons-modeler:commons-modeler')
   integrationTestRuntimeOnly('org.springframework:spring-web')
-  integrationTestRuntimeOnly('javax.mail:javax.mail-api')
+  integrationTestRuntimeOnly('jakarta.mail:jakarta.mail-api')
   integrationTestRuntimeOnly('mx4j:mx4j')
   integrationTestRuntimeOnly('mx4j:mx4j-remote')
   integrationTestRuntimeOnly('mx4j:mx4j-tools')

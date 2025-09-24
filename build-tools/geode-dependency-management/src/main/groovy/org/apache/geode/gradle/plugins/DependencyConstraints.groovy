@@ -47,7 +47,7 @@ class DependencyConstraints {
     deps.put("jackson.version", "2.17.0")
     deps.put("jackson.databind.version", "2.17.0")
     deps.put("springshell.version", "1.2.0.RELEASE")
-    deps.put("springframework.version", "5.3.21")
+    deps.put("springframework.version", "6.1.1")
 
     // These version numbers are used in testing various versions of tomcat and are consumed explicitly
     // in will be called explicitly in the relevant extensions module, and respective configurations
@@ -121,13 +121,17 @@ class DependencyConstraints {
         api(group: 'io.micrometer', name: 'micrometer-core', version: get('micrometer.version'))
         api(group: 'io.swagger.core.v3', name: 'swagger-annotations', version: '2.2.1')
         api(group: 'it.unimi.dsi', name: 'fastutil', version: get('fastutil.version'))
-        api(group: 'javax.annotation', name: 'javax.annotation-api', version: '1.3.2')
-        api(group: 'javax.annotation', name: 'jsr250-api', version: '1.0')
-        api(group: 'javax.ejb', name: 'ejb-api', version: '3.0')
-        api(group: 'javax.mail', name: 'javax.mail-api', version: '1.6.2')
-        api(group: 'javax.resource', name: 'javax.resource-api', version: '1.7.1')
+        api(group: 'jakarta.annotation', name: 'jakarta.annotation-api', version: '2.1.1')
+        api(group: 'jakarta.ejb', name: 'jakarta.ejb-api', version: '4.0.1')
+        api(group: 'jakarta.mail', name: 'jakarta.mail-api', version: '2.1.0')
+        api(group: 'jakarta.resource', name: 'jakarta.resource-api', version: '2.1.0')
+        api(group: 'jakarta.servlet', name: 'jakarta.servlet-api', version: '6.0.0')
+        // Legacy servlet APIs maintained for Tomcat 6-9 backward compatibility
+        api(group: 'javax.servlet', name: 'servlet-api', version: '2.5')
         api(group: 'javax.servlet', name: 'javax.servlet-api', version: '3.1.0')
-        api(group: 'javax.xml.bind', name: 'jaxb-api', version: '2.3.1')
+        api(group: 'jakarta.transaction', name: 'jakarta.transaction-api', version: '2.0.1')
+        api(group: 'jakarta.xml.bind', name: 'jakarta.xml.bind-api', version: '4.0.0')
+        api(group: 'com.sun.xml.bind', name: 'jaxb-impl', version: '4.0.1')
         api(group: 'joda-time', name: 'joda-time', version: '2.10.14')
         api(group: 'junit', name: 'junit', version: get('junit.version'))
         api(group: 'mx4j', name: 'mx4j-tools', version: '3.0.1')
@@ -143,7 +147,9 @@ class DependencyConstraints {
         api(group: 'org.apache.commons', name: 'commons-lang3', version: get('commons-lang3.version'))
         api(group: 'org.apache.commons', name: 'commons-text', version: 1.9)
         api(group: 'org.apache.derby', name: 'derby', version: '10.14.2.0')
+        api(group: 'org.apache.httpcomponents.client5', name: 'httpclient5', version: '5.2.1')
         api(group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.13')
+        api(group: 'org.apache.httpcomponents.core5', name: 'httpcore5', version: '5.2.1')
         api(group: 'org.apache.httpcomponents', name: 'httpcore', version: '4.4.15')
         api(group: 'org.apache.shiro', name: 'shiro-core', version: get('shiro.version'))
         api(group: 'org.assertj', name: 'assertj-core', version: '3.22.0')
@@ -163,8 +169,8 @@ class DependencyConstraints {
         api(group: 'org.postgresql', name: 'postgresql', version: '42.2.8')
         api(group: 'org.skyscreamer', name: 'jsonassert', version: '1.5.0')
         api(group: 'org.slf4j', name: 'slf4j-api', version: get('slf4j-api.version'))
-        api(group: 'org.springframework.hateoas', name: 'spring-hateoas', version: '1.5.0')
-        api(group: 'org.springframework.ldap', name: 'spring-ldap-core', version: '2.4.0')
+        api(group: 'org.springframework.hateoas', name: 'spring-hateoas', version: '2.0.6')
+        api(group: 'org.springframework.ldap', name: 'spring-ldap-core', version: '3.0.6')
         api(group: 'org.springframework.shell', name: 'spring-shell', version: get('springshell.version'))
         api(group: 'org.testcontainers', name: 'testcontainers', version: '1.21.3')
         api(group: 'pl.pragmatists', name: 'JUnitParams', version: '1.1.0')
@@ -249,7 +255,7 @@ class DependencyConstraints {
       entry('selenium-support')
     }
 
-    dependencySet(group: 'org.springframework.security', version: '5.6.5') {
+    dependencySet(group: 'org.springframework.security', version: '6.2.0') {
       entry('spring-security-config')
       entry('spring-security-core')
       entry('spring-security-ldap')
@@ -273,7 +279,7 @@ class DependencyConstraints {
       entry('spring-webmvc')
     }
 
-    dependencySet(group: 'org.springframework.boot', version: '2.6.7') {
+    dependencySet(group: 'org.springframework.boot', version: '3.2.0') {
       entry('spring-boot-starter')
       entry('spring-boot-starter-jetty')
       entry('spring-boot-starter-web')

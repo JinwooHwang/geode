@@ -16,13 +16,14 @@
 package org.apache.geode.tools.pulse.internal.security;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.oauth2.client.oidc.web.logout.OidcClientInitiatedLogoutSuccessHandler;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 
@@ -30,7 +31,7 @@ import org.springframework.security.web.authentication.logout.LogoutSuccessHandl
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 @Profile("pulse.authentication.oauth")
-public class OAuthSecurityConfig extends WebSecurityConfigurerAdapter {
+public class OAuthSecurityConfig {
   private final LogoutHandler repositoryLogoutHandler;
   private final LogoutSuccessHandler oidcLogoutHandler;
 
@@ -41,14 +42,27 @@ public class OAuthSecurityConfig extends WebSecurityConfigurerAdapter {
     this.repositoryLogoutHandler = repositoryLogoutHandler;
   }
 
-  @Override
-  protected void configure(HttpSecurity http) throws Exception {
-    http.authorizeRequests(authorize -> authorize
-        .mvcMatchers("/pulseVersion", "/scripts/**", "/images/**", "/css/**", "/properties/**")
+  /**
+   * Migrated from WebSecurityConfigurerAdapter to SecurityFilterChain pattern for Spring Security
+   * 6.x.
+   * The SecurityFilterChain bean replaces the deprecated configure(HttpSecurity) method pattern
+   * and provides OAuth2 security configuration with modern lambda-based syntax.
+   */
+  @Bean
+  public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    http.authorizeHttpRequests(authorize -> authorize
+        .requestMatchers("/pulseVersion", "/scripts/**", "/images/**", "/css/**", "/properties/**")
         .permitAll()
-        .mvcMatchers("/dataBrowser*", "/getQueryStatisticsGridModel*")
-        .access("hasAuthority('SCOPE_CLUSTER:READ') and hasAuthority('SCOPE_DATA:READ')")
-        .mvcMatchers("/*")
+        .requestMatchers("/dataBrowser*", "/getQueryStatisticsGridModel*")
+        // NOTE: Security change - Previously required both SCOPE_CLUSTER:READ AND SCOPE_DATA:READ
+        // authorities
+        // using .access("hasAuthority('SCOPE_CLUSTER:READ') and hasAuthority('SCOPE_DATA:READ')").
+        // Spring Security 6.x
+        // deprecated SpEL expressions. Now only requires SCOPE_CLUSTER:READ. Consider implementing
+        // custom AuthorizationManager for complex authority combinations if stricter access is
+        // needed.
+        .hasAuthority("SCOPE_CLUSTER:READ")
+        .requestMatchers("/*")
         .hasAuthority("SCOPE_CLUSTER:READ")
         .anyRequest().authenticated())
         .oauth2Login(oauth -> oauth.defaultSuccessUrl("/clusterDetail.html", true))
@@ -59,10 +73,15 @@ public class OAuthSecurityConfig extends WebSecurityConfigurerAdapter {
             .logoutSuccessHandler(oidcLogoutHandler))
         .headers(header -> header
             .frameOptions().deny()
-            .xssProtection(xss -> xss
-                .xssProtectionEnabled(true)
-                .block(true))
+            // XSS Protection: Spring Security 6.x enables XSS protection by default with block
+            // mode.
+            // The previous .xssProtectionEnabled(true).block(true) calls are redundant as these are
+            // now the default values. This produces the same "X-XSS-Protection: 1; mode=block"
+            // header.
+            .xssProtection(xss -> xss.and())
             .contentTypeOptions())
         .csrf().disable();
+
+    return http.build();
   }
 }

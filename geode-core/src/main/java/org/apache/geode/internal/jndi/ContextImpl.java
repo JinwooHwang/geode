@@ -34,7 +34,8 @@ import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.NoPermissionException;
 import javax.naming.NotContextException;
-import javax.transaction.SystemException;
+
+import jakarta.transaction.SystemException;
 
 import org.apache.geode.LogWriter;
 import org.apache.geode.annotations.Immutable;
