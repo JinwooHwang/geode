@@ -33,8 +33,8 @@ class DependencyConstraints {
     // These version numbers are consumed by :geode-modules-assembly:distAppServer filtering
     // Some of these are referenced below as well
     deps.put("antlr.version", "2.7.7")
-    deps.put("commons-io.version", "2.15.1")
-    deps.put("commons-lang3.version", "3.12.0")
+    deps.put("commons-io.version", "2.18.0")
+    deps.put("commons-lang3.version", "3.18.0")
     deps.put("commons-validator.version", "1.7")
     deps.put("fastutil.version", "8.5.8")
     deps.put("javax.transaction-api.version", "1.3")
@@ -44,8 +44,8 @@ class DependencyConstraints {
     deps.put("shiro.version", "1.13.0")
     deps.put("slf4j-api.version", "1.7.32")
     deps.put("jboss-modules.version", "1.11.0.Final")
-    deps.put("jackson.version", "2.17.0")
-    deps.put("jackson.databind.version", "2.17.0")
+    deps.put("jackson.version", "2.18.6")
+    deps.put("jackson.databind.version", "2.18.6")
     deps.put("springshell.version", "1.2.0.RELEASE")
     deps.put("springframework.version", "5.3.20")
 
