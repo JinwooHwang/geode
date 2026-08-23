@@ -16,6 +16,8 @@
 package org.apache.geode.management.internal.cli.commands;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,6 +35,7 @@ import org.apache.geode.management.internal.cli.functions.ExportDataFunction;
 import org.apache.geode.management.internal.cli.result.model.ResultModel;
 import org.apache.geode.management.internal.functions.CliFunctionResult;
 import org.apache.geode.management.internal.i18n.CliStrings;
+import org.apache.geode.security.ResourcePermission;
 import org.apache.geode.security.ResourcePermission.Operation;
 import org.apache.geode.security.ResourcePermission.Resource;
 
@@ -54,6 +57,10 @@ public class ExportDataCommand extends GfshCommand {
           help = CliStrings.EXPORT_DATA__PARALLEL_HELP) boolean parallel) {
 
     authorize(Resource.DATA, Operation.READ, regionName);
+    // Exporting reads region data, but its effect is a file written on the member's filesystem.
+    // That side effect is a change to the cluster's hosts, so it requires a write permission of
+    // its own rather than riding on read access to the data.
+    authorize(Resource.CLUSTER, Operation.WRITE, ResourcePermission.ALL);
     final DistributedMember targetMember = getMember(memberNameOrId);
 
     Optional<ResultModel> validationResult = validatePath(filePath, dirPath, parallel);
@@ -100,6 +107,30 @@ public class ExportDataCommand extends GfshCommand {
       return Optional.of(ResultModel.createError(CliStrings.format(
           CliStrings.INVALID_FILE_EXTENSION, CliStrings.GEODE_DATA_FILE_EXTENSION)));
     }
+
+    // Rejected here so that the caller gets a clear message; the member the export runs on is the
+    // one that decides which directories may actually be written to.
+    if (filePath != null && containsParentDirectoryReference(filePath)) {
+      return Optional.of(parentReferenceError(CliStrings.EXPORT_DATA__FILE, filePath));
+    }
+    if (dirPath != null && containsParentDirectoryReference(dirPath)) {
+      return Optional.of(parentReferenceError(CliStrings.EXPORT_DATA__DIR, dirPath));
+    }
+
     return Optional.empty();
+  }
+
+  private static boolean containsParentDirectoryReference(String path) {
+    for (Path element : Paths.get(path)) {
+      if ("..".equals(element.toString())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static ResultModel parentReferenceError(String option, String path) {
+    return ResultModel.createError(String.format(
+        "Option \"%s\" must not contain a parent directory reference (\"..\"): %s", option, path));
   }
 }
